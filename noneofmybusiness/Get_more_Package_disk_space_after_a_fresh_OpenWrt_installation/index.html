@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- <meta http-equiv="Content-Type" content="text/html; width=device-width; initial-scale=1.0" /> -->
+    <meta name="viewport" content="text/html; width=device-width" />
+
+    <title>Get more package disk space after a fresh OpenWrt installation</title>
+    <link rel="stylesheet" type="text/css" href="../../report.css" />
+    <link rel="stylesheet" type="text/css" href="../../Temml-0.13.01/dist/Temml-Latin-Modern.css" />
+    <link rel="stylesheet" type="text/css" href="../../highlight/github.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../jsxgraph/jsxgraph.css" />
+    <script src="../../jsxgraph/jsxgraphcore.js" onload="JXG.Options.text.useKatex = true"></script>
+  </head>
+
+  <body>
+    <header>
+      <nav class="narrownav">a</nav>
+      <h1>Get more package disk space after a fresh OpenWrt installation</h1>
+      <hr />
+    </header>
+    <div class="main">
+      <aside>
+        <nav class="contents">
+          <details open>
+            <summary>
+              <h3>
+                <b>Content</b>
+              </h3>
+            </summary>
+            <ul id="content"></ul>
+          </details>
+          <details open>
+            <summary>
+              <h3><b>Appendix</b></h3>
+            </summary>
+            <ul id="appendix">
+              <li>Figure.1</li>
+            </ul>
+          </details>
+          <a href="#title"><button title="go top" type="button" class="back2top">TOP</button></a>
+        </nav>
+      </aside>
+
+      <article>
+        <section>
+          It seems like I have to resize the partition of OpenWrt image downloaded from the web. In other words, if I directly burn the image into the TF card, it will success the size of the image. Fortunately, it ends up with
+          <a href="https://openwrt.org/docs/guide-user/installation/installation_methods/sd_card#ext4_image">sd card chapter in openwrt tutorial</a>. You better use ext4 filesystem cause squashfs is read-only, and the overlayfs is still hard one for me. Although there're all what I want, this note is taken exactly for recording meaningful thing. So here down are the steps. Besides there are two more links refer to some guides which I don't read carefully
+          <a href="http://bugs.openwrt.org/index.php?do=details&task_id=2951">github issue (ext4 generic: online resizing of root partition fails)</a>
+          and
+          <a href="https://openwrt.org/docs/guide-user/installation/openwrt_x86#expanding_root_partition_and_filesystem">openwrt toturial about expanding storage</a>. Note that there's no loop0 partition in ext4 filesystem. Maybe next time it is.
+
+          <kbd style="background-color: yellow">Modified in 2024/11/13 16:03</kbd>
+          <ul>
+            <li>
+              <del
+                >To resize `/dev/mmcblk0p2` (normally the last partition of the tf card which should take the large part of the rest storage.But do not take all because the system need some free space to do something. Install <code><del>parted,tune2fs,resize2fs</del></code
+                >and then
+              </del>
+            </li>
+            <pre><code><del>parted
+				p
+				resizepart 2 6G # I took 6G out of the 8G in the first successful operation.
+				q</del></code></pre>
+            <li>
+              <del> Need to repair the device (perhaps say yes to all interactive queries) </del>
+            </li>
+            <pre><code><del>mount -o remount,ro / #Remount root as Read Only
+				tune2fs -O^resize_inode /dev/mmcblk0p2 #Remove reserved GDT blocks
+				fsck.ext4 /dev/mmcblk0p2 #Fix part, answer yes to remove GDT blocks remnants</del></code></pre>
+            <li>
+              <del> Finally `reboot` and the resize the partition with: </del>
+            </li>
+            <pre><code><del>resize2fs /dev/mmcblk0p2</del></code></pre>
+          </ul>
+          <ins>I don't remember where I copy the code above, it does not work, mainly due to the miss package <code>losetup</code>, which is listed on <a href="https://openwrt.org/docs/guide-user/installation/openwrt_x86#expanding_root_partition_and_filesystem">openwrt toturial about expanding storage</a>, and no tune2fs in fact on that toturial. </ins>
+          <p>Eventually I got extra 6G for god sake after digging in the internet.</p>
+          <p>
+            Now I understand the
+            <a href="https://openwrt.org/docs/guide-user/advanced/expand_root#expanding_root_partition_and_filesystem">script for expanding storage</a>. It's essentially because the storage will be reset after sysupgrade. Before that, <code>parted losetup resize2fs</code> must have been installed on machine. And there gives an automated script:
+          </p>
+          <pre><code>wget -U "" -O expand-root.sh "https://openwrt.org/_export/code/docs/guide-user/advanced/expand_root?codeblock=0"
+			./expand-root.sh</code></pre>
+          <p>It turns out that the script url is invalid. To demonstrate the script:</p>
+          <pre><code class="language-bash"># Configure startup scripts
+			cat << "EOF" > /etc/uci-defaults/70-rootpt-resize
+				   if [ ! -e /etc/rootpt-resize ] && type parted > /dev/null && lock -n /var/lock/root-resize then
+			  ROOT_BLK="$(readlink -f /sys/dev/block/"$(awk -e '$9=="/dev/root"{print $3}' /proc/self/mountinfo)")"
+			  ROOT_DISK="/dev/$(basename "${ROOT_BLK%/*}")"
+			  ROOT_PART="${ROOT_BLK##*[^0-9]}"
+			  parted -f -s "${ROOT_DISK}" resizepart "${ROOT_PART}" 100%
+			  mount_root done
+			  touch /etc/rootpt-resize
+			  reboot
+			  fi
+			  exit 1
+			  EOF
+			  cat << "EOF" > /etc/uci-defaults/80-rootfs-resize
+					 if [ ! -e /etc/rootfs-resize ] && [ -e /etc/rootpt-resize ] && type losetup > /dev/null && type
+				resize2fs > /dev/null \ && lock -n /var/lock/root-resize
+				then
+				ROOT_BLK="$(readlink -f /sys/dev/block/"$(awk -e '$9=="/dev/root"{print $3}' /proc/self/mountinfo)")"
+				ROOT_DEV="/dev/${ROOT_BLK##*/}" LOOP_DEV="$(awk -e '$5=="/overlay"{print $9}' /proc/self/mountinfo)"
+				if [ -z "${LOOP_DEV}" ] then
+				LOOP_DEV="$(losetup -f)"
+				losetup "${LOOP_DEV}" "${ROOT_DEV}"
+				fi
+				resize2fs -f "${LOOP_DEV}"
+				mount_root done
+				touch /etc/rootfs-resize
+				reboot
+				fi
+				exit 1
+				EOF
+				cat << "EOF" >> /etc/sysupgrade.conf
+				  /etc/uci-defaults/70-rootpt-resize
+				  /etc/uci-defaults/80-rootfs-resize
+				  EOF</code></pre>
+            Actually it looks like I really should check out the
+            <a href="https://openwrt.org/docs/guide-user/additional-software/imagebuilder">Imgae Builder</a>. Different from compiling, we can build our own custom image. This doesn't compile the whole software, instead it downloads required packages from the same repository used by OpenWrt to install them. Image Builder builds the same image files used for installing and upgrading OpenWrt.
+          </p>
+
+          <p>Due to that it's much simpler than compiling and offers great advantages, like adding directly to the image all packages we need, removing those we don't need, and also adding to it our config files. Having packages on the image, we don't need to reinstall all of them after an upgrade. And having our config files directly on the image, we don't need to reconfigure everything or copy all files from backup, which is specially difficult when default network configs don't work with our router's interfaces or it doesn't start with correct IP address. In many cases, OpenWrt will be back fully working on first boot after upgrading.</p>
+          <p>Another advantage for building a custom image is when the default rootfs partition size is too small to store all packages and we need to expand it. Note that, when following above procedures of installing then expanding partition and upgrading by writing partition image or extracting <code>rootfs.tar.gz</code>, we don't need to build the image with the final size of the partition. Doing so would result in the too large image file and would require enough RAM to store the whole file during building. It's recommended to use on the image just enough size to store all packages plus a small amount of free space.</p>
+        </section>
+      </article>
+      <aside>
+        <div class="related">Related</div>
+        <button type="button" style="position: fixed; bottom: 10vw">DARK</button>
+      </aside>
+    </div>
+    <footer>
+      <hr />
+      <kbd type="button" onclick="showModal()">as</kbd>
+      <button type="button" onclick="showModal()">as</button>
+      email: @chaos.com
+    </footer>
+  </body>
+  <script src="../../Temml-0.13.01/dist/temml.min.js"></script>
+  <script src="../../highlight/highlight.min.js" onload="hljs.highlightAll()"></script>
+  <script src="../../manualscript.js" defer></script>
+</html>

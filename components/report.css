@@ -1,0 +1,516 @@
+html {
+  scroll-behavior: smooth;
+  line-height: 1.4;
+}
+body {
+  background-color: #fafafa;
+  /* font-family: "LM Math"; */
+  font-family: "Latin Modern Math";
+  font-size: 1rem;
+  /* font-size: 12pt; */
+  hyphens: auto;
+  margin-top: 0;
+  /* margin-left: 0; */
+  margin-bottom: 2rem;
+  /* box-sizing: border-box; */
+  padding: 0px;
+}
+
+.main {
+  display: grid;
+  /* grid-template-columns: minmax(15rem, 30rem) minmax(0, 1fr) minmax(15rem, 30rem); */
+  grid-template-columns: 1fr 1.5fr 1fr;
+  counter-set: figure table cite reference formula tmlEqnNo;
+}
+
+ins {
+  color: red;
+}
+
+del {
+  color: grey;
+  font-style: italic;
+}
+
+a {
+  text-decoration: none;
+}
+
+:is(h1, h2, h3, h4, h5, h6) {
+  font-family: serif;
+}
+
+header {
+  text-align: center;
+  /* grid-column: 1/-1; */
+}
+
+.narrownav {
+  background-color: rgba(240, 240, 240, 0.7);
+  backdrop-filter: blur(3px);
+  position: fixed;
+  /* display: none; */
+  visibility: hidden;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  height: 3rem;
+  margin: 0;
+  z-index: 2;
+}
+
+aside {
+  /* border: 1px solid black; */
+  ul {
+    text-indent: 0;
+  }
+  li,
+  a {
+    color: grey;
+  }
+  li:hover {
+    color: black;
+  }
+  a:hover {
+    color: black;
+    /* font-weight: bold; */
+  }
+}
+
+.contents {
+  position: sticky;
+  display: table;
+  top: 4rem;
+  float: right;
+  details {
+    /* margin-top: 4rem; */
+    margin-bottom: 2rem;
+    border: 2px solid #001f3f;
+    background-color: rgba(240, 240, 240, 0.7);
+    backdrop-filter: blur(1px);
+    summary {
+      cursor: pointer;
+      background-color: #001f3f;
+      color: white;
+      list-style: none;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      h3 {
+        margin: 0;
+      }
+    }
+    ul {
+      margin-right: 1rem;
+      margin-left: 1rem;
+      padding-inline-start: 0;
+      list-style-position: inside;
+    }
+  }
+}
+
+article {
+  padding: 0 2rem;
+  position: relative;
+  & :is(h2, h3, h4, h5, h6):hover::after {
+    color: orange;
+    content: " #";
+  }
+  a {
+    border: 1px solid transparent;
+    color: #733c4a;
+    &[href^="#"] {
+      &.tab,
+      &.fig,
+      &.eq {
+        border: 1px solid transparent;
+      }
+      &.tab:hover,
+      &.fig:hover,
+      &.eq:hover {
+        border: 1px solid blue;
+      }
+      &.tab:before {
+        content: "Table ";
+      }
+      &.fig:before {
+        content: "Figure ";
+      }
+      &.eq:before {
+        content: "Formula ";
+      }
+    }
+    &:hover {
+      /* color: green; */
+      /* text-decoration: underline; */
+      border: 1px solid red;
+      /* border-shadow: 1px 1px 1px #eee; */
+    }
+  }
+  b {
+    font-family: "Libertinus Sans";
+    color: purple;
+    /* border: 1px solid olive; */
+    /* background-color: yellow; */
+    /* font-style: italic; */
+  }
+}
+
+cite {
+  counter-increment: cite;
+  font-style: normal;
+  cursor: pointer;
+  padding: 0 2px;
+  /* &:hover { */
+  /*   position: relative; */
+  /* } */
+  &[type="red"] {
+    &,
+    & + .annotate {
+      background-color: #ffdddd;
+      border: 1px solid red;
+    }
+    &:hover + .annotate:not(.fixed),
+    & + .annotate:hover:not(.fixed) {
+      visibility: visible;
+      background-color: #ffdddd99;
+      backdrop-filter: blur(3px);
+    }
+  }
+  &[type="green"] {
+    &,
+    & + .annotate {
+      background-color: #b2e5b2;
+      border: 1px solid green;
+    }
+    &:hover + .annotate:not(.fixed),
+    & + .annotate:hover:not(.fixed) {
+      visibility: visible;
+      background-color: #b2e5b299;
+      backdrop-filter: blur(3px);
+    }
+  }
+  &[type="reference"] {
+    &,
+    & + .annotate {
+      border: 1px solid #282a36;
+    }
+  }
+  &::before {
+    content: "" counter(cite);
+    /* display: inline-block; */
+    /* margin-left: -2.5em; */
+    /* position: absolute; */
+  }
+}
+
+.annotate {
+  position: absolute;
+  visibility: hidden;
+  /* transition: visibility 0.2s; */
+  padding: 0.2rem 0.4rem;
+  z-index: 1;
+  button {
+    line-height: 1;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    cursor: pointer;
+    /* background-color: rgba(240, 240, 240, 0.1); */
+    background-color: rgba(240, 240, 240, 0.1);
+    backdrop-filter: blur(3px);
+    visibility: hidden;
+    &:hover {
+      border: 1px solid #b4b4b4;
+      color: #333;
+      background-color: #eeeeeeff;
+      /* backdrop-filter: 0; */
+      box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.2),
+        0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
+    }
+  }
+  &.fixed {
+    display: table;
+    position: relative;
+    visibility: visible;
+    &:hover button {
+      visibility: visible;
+    }
+  }
+}
+
+table {
+  margin: 1em auto 1em auto;
+  text-align: center;
+  vertical-align: middle;
+  border-collapse: collapse;
+  counter-increment: table;
+  caption {
+    /* caption-side: bottom; */
+    /* margin-top: 6px; */
+    background-color: #eee;
+    &::before {
+      content: "Table " counter(table) ". ";
+    }
+  }
+  th {
+    padding: 1px 2.5em 1px 2.5em;
+    border-top: 2px solid black;
+    border-bottom: 1px solid black;
+    border-left: none;
+    border-right: none;
+  }
+  td {
+    padding: 1px 2.5em 1px 2.5em;
+  }
+  tbody tr:last-of-type {
+    border-bottom: 2px solid black;
+  }
+  tbody > tr:nth-of-type(odd) {
+    background-color: #f6f6f6;
+  }
+}
+
+figure {
+  counter-increment: figure;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  /* text { */
+  /*   font-size: 10pt; */
+  /* } */
+  figcaption {
+    /* position: relative; */
+    text-align: center;
+      /* font-size: medium; */
+	/* margin: 0 auto; */
+    background-color: #eee;
+    /* font-family: "Latin Modern Math"; */
+    &::before {
+      content: "Figure " counter(figure) ". ";
+    }
+  }
+  img {
+      display: block;
+	  max-width: 100%;
+	  /* height: auto; */
+  }
+  math {
+    color: inherit;
+  }
+}
+
+math {
+	text-align: center;
+	/* max-width: 40rem; */
+  margin: auto;
+  color: blue;
+  /* counter-increment: math; */
+  /* position: relative; */
+  &.formula {
+    display: block;
+    margin: 8pt 0 8pt 0;
+    counter-increment: formula;
+    /* counter-increment: tmlEqnNo; */
+    position: relative;
+    &::after {
+      content: "(" counter(formula) ")";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+}
+
+code {
+  /* background-color: rgba(240, 240, 240, 0.7); */
+  background-color: rgba(240, 240, 240);
+  /* font-family: "Courier new"; */
+  font-family: "Source Code Pro";
+  font-weight: bold;
+  font-size: 0.8rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
+  display: inline-block;
+  padding: 0px 2px 0px 2px;
+  white-space: pre-line;
+}
+
+pre {
+  margin-block: 0;
+  code {
+    background-color: #eee;
+    /* display: inline-block; */
+    border: 1px solid #e0e0e0;
+    /* border-radius: 2px; */
+    padding: 0.2rem 0.4rem 0.2rem 0.4rem;
+    tab-size: 4;
+  }
+}
+
+button,
+kbd {
+  background-color: #eee;
+  border-radius: 3px;
+  border: 1px solid #b4b4b4;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.2),
+    0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
+  color: #777;
+  /* display: inline-block; */
+  font-family: "Source Code Pro";
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.codebox {
+  position: relative;
+  display: table;
+  margin: 10px 0 10px 0;
+  button {
+    visibility: hidden;
+    background-color: rgba(240, 240, 240, 0.1);
+    backdrop-filter: blur(1.5px);
+    position: absolute;
+    color: #333;
+    bottom: 3px;
+    right: 3px;
+    cursor: pointer;
+    &:active {
+      box-shadow:
+        /* 0 1px 1px rgba(0, 0, 0, 0.2), */ 0 2px 0 0 rgba(255, 255, 255, 0.7);
+    }
+  }
+  &:hover button {
+    visibility: visible;
+    /* transition: all 0.3s ease; */
+    /* &:hover { */
+    /* background-color: #eee; */
+    /* color: #333; */
+    /* backdrop-filter: 0; */
+    /* box-shadow: */
+    /*   0 1px 1px rgba(0, 0, 0, 0.2), */
+    /*   0 2px 0 0 rgba(255, 255, 255, 0.7) inset; */
+    /* } */
+  }
+}
+
+.related {
+  border: 2px solid black;
+  height: 90vh;
+}
+
+canvas {
+  margin: 0 auto 0 auto;
+  display: block;
+}
+
+.jxgbox {
+  border: none !important;
+  & :focus {
+    outline: none !important;
+  }
+}
+
+button.back2top {
+  position: sticky;
+  line-height: 1;
+  /* bottom: 0vh; */
+  /* left: 0rem; */
+  &:hover {
+    color: #333;
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.1),
+      0 2px 0 0 rgba(255, 255, 255, 0.1);
+  }
+  &:active {
+    box-shadow:
+        /* 0 1px 1px rgba(0, 0, 0, 0.2), */ 0 2px 0 0 rgba(255, 255, 255, 0.7);
+  }
+}
+
+footer {
+  text-align: center;
+  /* grid-column: 1/-1; */
+}
+
+/* aside { */
+/* position: absolute; */
+/* transform: translate(0, -2em); */
+/* right: calc(2rem - 18vw); */
+/* width: calc(18vw - 2rem); */
+/* padding: 0.5rem 0.7rem 0.5rem 0.7rem; */
+/* right: calc(-0vw + 0rem); */
+/* float: right; */
+/* background-color: #b2e5b266;  green  */
+/* background-color: hsla(0, 10%, 60%, 0.5);  red  */
+/* } */
+
+/* .footnote { */
+/*   counter-increment: footnote; */
+/*   float: prince-column-footnote; */
+/*   margin-left: 0.333em; */
+/*   padding-left: 0.667em; */
+/* } */
+/* .footnote:footnote-call { */
+/*   content: counter(footnote); */
+/*   font-size: 66%; */
+/*   line-height: none; */
+/*   vertical-align: super; */
+/* } */
+/* .footnote:footnote-marker { */
+/*   content: counter(footnote); */
+/*   font-size: 66%; */
+/*   footnote-style-position: inside; */
+/* } */
+
+@font-face {
+  font-family: "LM math";
+  /* src: url("/usr/share/fonts/OTF/latinmodern-math.otf"); */
+  src: url("Temml-0.13.01/dist/latinmodernmath.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Courier new";
+  src: url("/usr/share/fonts/TTF/Courier New Bold.ttf");
+}
+
+@media (max-width: 40rem) {
+  .main {
+    display: block;
+  }
+  aside {
+    display: none;
+  }
+  article {
+    padding: 0;
+  }
+  .narrownav {
+    visibility: visible;
+  }
+}
+
+@media (hover: none) {
+  html {
+    line-height: 1.5;
+  }
+  math.formula::after {
+	  content: ""
+  }
+}
+
+/* @media (prefers-color-scheme: dark) { */
+/*   body { */
+/*     background-color: rgb(25, 26, 27); */
+/*     color: white; */
+/*   } */
+/*   a { */
+/*     color: white; */
+/*   } */
+/* } */
